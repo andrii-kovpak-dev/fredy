@@ -235,6 +235,19 @@ describe('services/listings/priceHistoryService', () => {
       expect(state.sent).toHaveLength(1);
     });
 
+    it('notifies street names containing an excluded location only as part of a word', async () => {
+      state.jobs.job1.excludedLocations = ['Köpenick'];
+      const { notifyPriceChanges } = await loadService();
+
+      await notifyPriceChanges([
+        { ...change('job1'), listing: listing(1100, { address: 'Berlin Köpenick' }) },
+        { ...change('job1'), listing: listing(1100, { address: 'Köpenicker Straße 1, Berlin' }) },
+      ]);
+
+      expect(state.sent).toHaveLength(1);
+      expect(state.sent[0][1].map((item) => item.address)).toEqual(['Köpenicker Straße 1, Berlin']);
+    });
+
     // One job's misconfigured adapter must not swallow every other job's notifications.
     it('carries on after one job fails', async () => {
       state.jobs.job2 = { id: 'job2', userId: 'u2', name: 'Other', notificationAdapter: [{ id: 'ntfy' }] };

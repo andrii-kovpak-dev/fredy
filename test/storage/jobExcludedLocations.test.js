@@ -97,7 +97,7 @@ describe('job location exclusion persistence', () => {
       VALUES ('old', 'u1', 'My search', '["ground floor"]', '[{"id":"immoscout"}]', '{"type":"FeatureCollection","features":[]}');
     `);
     const before = db.prepare(`SELECT * FROM jobs WHERE id = 'old'`).get();
-    const { up } = await import('../../lib/services/storage/migrations/sql/52.job-excluded-locations.js');
+    const { up } = await import('../../lib/services/storage/migrations/sql/54.job-excluded-locations.js');
 
     up(db);
     up(db);

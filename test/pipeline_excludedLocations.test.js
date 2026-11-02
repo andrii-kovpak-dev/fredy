@@ -110,6 +110,37 @@ describe('per-job location exclusions in the pipeline', () => {
     expect(getNotification().payload).toHaveLength(1);
   });
 
+  it('passes listings through unchanged when no exclusions are configured, including an empty batch', async () => {
+    const Fredy = await mockFredy();
+    const pipeline = new Fredy({}, { id: 'job-1', excludedLocations: [] }, PROVIDER);
+    const listings = [advert('allowed', 'Berlin Mitte')];
+    const empty = [];
+
+    expect(pipeline._filterByExcludedLocations(listings)).toBe(listings);
+    expect(pipeline._filterByExcludedLocations(empty)).toBe(empty);
+  });
+
+  it('keeps street names that only contain an excluded location as part of a word', async () => {
+    const stored = await run(
+      [
+        advert('spandauer', 'Spandauer Straße 1, Berlin'),
+        advert('mittenwalder', 'Mittenwalder Straße 1, Berlin'),
+        advert('buchholzer', 'Buchholzer Straße 1, Berlin'),
+        advert('koepenicker', 'Köpenicker Straße 1, Berlin'),
+        advert('excluded', 'Berlin Köpenick'),
+      ],
+      { excludedLocations: ['Spandau', 'Mitte', 'Buch', 'Köpenick'] },
+    );
+
+    expect(stored.map((item) => item.id)).toEqual(['spandauer', 'mittenwalder', 'buchholzer', 'koepenicker']);
+    expect(getNotification().payload.map((item) => item.id)).toEqual([
+      'spandauer',
+      'mittenwalder',
+      'buchholzer',
+      'koepenicker',
+    ]);
+  });
+
   it('allows missing addresses and does not match place names mentioned only in descriptions', async () => {
     const stored = await run(
       [
